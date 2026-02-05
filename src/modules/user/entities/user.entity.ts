@@ -9,6 +9,11 @@ import {
 import { WalletBalance } from '../../wallet/entities/wallet-balance.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -22,6 +27,9 @@ export class User {
 
   @Column({ default: false })
   emailVerified: boolean;
+
+  @Column({ type: 'varchar', length: 20, default: UserRole.USER })
+  role: UserRole;
 
   @CreateDateColumn()
   createdAt: Date;

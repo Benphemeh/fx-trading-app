@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, BadRequestException, Logger, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../user/user.repository';
@@ -6,6 +7,7 @@ import { OtpRepository } from './otp.repository';
 import { MailService } from './mail.service';
 import { APP_REPOSITORIES } from '../../constants/repositories';
 import type { User } from '../user/entities/user.entity';
+import { UserRole } from '../user/entities/user.entity';
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 10;
@@ -21,6 +23,7 @@ export class AuthService {
   constructor(
     @Inject(APP_REPOSITORIES.USER)
     private readonly userRepo: UserRepository,
+    private readonly config: ConfigService,
     private readonly otpRepo: OtpRepository,
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
@@ -54,7 +57,13 @@ export class AuthService {
     return { message: 'Registration successful. Check your email for the OTP.' };
   }
 
-  async verifyOtp(email: string, otp: string): Promise<{ access_token: string; user: { id: string; email: string; emailVerified: boolean } }> {
+  async verifyOtp(
+    email: string,
+    otp: string,
+  ): Promise<{
+    access_token: string;
+    user: { id: string; email: string; emailVerified: boolean; role: UserRole };
+  }> {
     const normalized = email.toLowerCase().trim();
     const record = await this.otpRepo.findValid(normalized, otp);
     if (!record) {
@@ -69,10 +78,22 @@ export class AuthService {
     }
     await this.otpRepo.markUsed(record.id);
     user.emailVerified = true;
+
+    const adminEmails = this.config.get<string>('ADMIN_EMAILS', '');
+    const isAdmin = adminEmails
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+      .includes(normalized);
+    if (isAdmin) {
+      user.role = UserRole.ADMIN;
+    }
+
     await this.userRepo.save(user);
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
+      role: user.role,
     });
     return {
       access_token: token,
@@ -80,6 +101,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
+        role: user.role,
       },
     };
   }

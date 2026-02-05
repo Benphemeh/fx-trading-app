@@ -34,4 +34,18 @@ export class UserRepository {
   async save(user: User): Promise<User> {
     return this.repo.save(user);
   }
+
+  async findAll(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }> {
+    const { limit = 50, offset = 0 } = options ?? {};
+    const [users, total] = await this.repo.findAndCount({
+      select: ['id', 'email', 'emailVerified', 'role', 'createdAt'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+    return { users, total };
+  }
 }

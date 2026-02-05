@@ -1,23 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UserRepository } from '../user/user.repository';
 import { OtpRepository } from './otp.repository';
 import { MailService } from './mail.service';
 import { APP_REPOSITORIES } from '../../constants/repositories';
+import { UserRole } from '../user/entities/user.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
   let userRepo: jest.Mocked<UserRepository>;
   let otpRepo: jest.Mocked<OtpRepository>;
   let mailService: jest.Mocked<MailService>;
+  let configGet: jest.Mock;
 
   const mockUser = {
     id: 'user-1',
     email: 'test@example.com',
     passwordHash: 'hash',
     emailVerified: false,
+    role: UserRole.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -31,6 +35,7 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    configGet = jest.fn((key: string) => (key === 'ADMIN_EMAILS' ? '' : undefined));
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -59,6 +64,7 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: { sign: jest.fn().mockReturnValue('jwt-token') },
         },
+        { provide: ConfigService, useValue: { get: configGet } },
       ],
     }).compile();
 
@@ -130,6 +136,7 @@ describe('AuthService', () => {
     it('verifies OTP and returns JWT with user', async () => {
       (otpRepo.findValid as jest.Mock).mockResolvedValue(mockOtpRecord);
       (userRepo.findByEmail as jest.Mock).mockResolvedValue({ ...mockUser, emailVerified: false });
+      configGet.mockReturnValue('');
 
       const result = await service.verifyOtp('test@example.com', '123456');
 
@@ -139,10 +146,25 @@ describe('AuthService', () => {
           id: 'user-1',
           email: 'test@example.com',
           emailVerified: true,
+          role: UserRole.USER,
         },
       });
       expect(otpRepo.markUsed).toHaveBeenCalledWith('otp-1');
       expect(userRepo.save).toHaveBeenCalled();
+    });
+
+    it('assigns ADMIN role when email is in ADMIN_EMAILS', async () => {
+      (otpRepo.findValid as jest.Mock).mockResolvedValue(mockOtpRecord);
+      (userRepo.findByEmail as jest.Mock).mockResolvedValue({ ...mockUser, emailVerified: false });
+      const configGet = (service as any).config.get as jest.Mock;
+      configGet.mockReturnValue('admin@example.com,test@example.com');
+
+      const result = await service.verifyOtp('test@example.com', '123456');
+
+      expect(result.user.role).toBe(UserRole.ADMIN);
+      expect(userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ role: UserRole.ADMIN }),
+      );
     });
 
     it('normalizes email when verifying', async () => {

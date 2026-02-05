@@ -9,8 +9,9 @@ import { CacheModule } from './modules/cache/cache.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { WalletModule } from './modules/wallet/wallet.module';
-import { FxModule } from './modules/fx/fx.module';
+import { FxModule } from '@/modules/fx/fx.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { typeOrmModuleOptions } from './config/typeorm.options';
 
 @Module({
@@ -32,6 +33,7 @@ import { typeOrmModuleOptions } from './config/typeorm.options';
     WalletModule,
     FxModule,
     TransactionModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

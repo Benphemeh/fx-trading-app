@@ -23,4 +23,5 @@ export const configValidationSchema = Joi.object({
   MAIL_FROM: Joi.string().optional(),
   RESEND_API_KEY: Joi.string().allow('').optional(),
   SUPPORTED_CURRENCIES: Joi.string().default('NGN,USD,EUR,GBP'),
+  ADMIN_EMAILS: Joi.string().allow('').optional(),
 });

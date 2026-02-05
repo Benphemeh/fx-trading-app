@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { TransactionRepository } from './transaction.repository';
-import { TransactionType } from './entities/transaction.entity';
+import { Transaction, TransactionType } from './entities/transaction.entity';
 import { APP_REPOSITORIES } from '../../constants/repositories';
 import { fromMinorUnits } from '../../constants/currencies';
 
@@ -31,7 +31,39 @@ export class TransactionService {
       ...options,
       limit: options?.limit ?? 50,
     });
+    return list.map((t) => this.formatTransaction(t));
+  }
+
+  async getAllHistory(options?: {
+    type?: TransactionType;
+    limit?: number;
+    offset?: number;
+  }): Promise<
+    {
+      id: string;
+      userId: string;
+      type: TransactionType;
+      status: string;
+      amount: number;
+      currency: string;
+      amountDestination: number | null;
+      currencyDestination: string | null;
+      rateUsed: number | null;
+      createdAt: string;
+    }[]
+  > {
+    const list = await this.transactionRepo.findAll({
+      ...options,
+      limit: options?.limit ?? 50,
+    });
     return list.map((t) => ({
+      ...this.formatTransaction(t),
+      userId: t.userId,
+    }));
+  }
+
+  private formatTransaction(t: Transaction) {
+    return {
       id: t.id,
       type: t.type,
       status: t.status,
@@ -43,6 +75,6 @@ export class TransactionService {
       currencyDestination: t.currencyDestination ?? null,
       rateUsed: t.rateUsed ? Number(t.rateUsed) : null,
       createdAt: t.createdAt.toISOString(),
-    }));
+    };
   }
 }

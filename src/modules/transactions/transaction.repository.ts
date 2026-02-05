@@ -41,4 +41,18 @@ export class TransactionRepository {
     if (options?.offset) qb.skip(options.offset);
     return qb.getMany();
   }
+
+  async findAll(options?: {
+    type?: TransactionType;
+    limit?: number;
+    offset?: number;
+  }): Promise<Transaction[]> {
+    const qb = this.repo
+      .createQueryBuilder('t')
+      .orderBy('t.createdAt', 'DESC');
+    if (options?.type) qb.andWhere('t.type = :type', { type: options.type });
+    if (options?.limit) qb.take(options.limit);
+    if (options?.offset) qb.skip(options.offset);
+    return qb.getMany();
+  }
 }

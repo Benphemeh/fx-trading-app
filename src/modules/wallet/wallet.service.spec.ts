@@ -7,6 +7,7 @@ import { TransactionRepository } from '../transactions/transaction.repository';
 import { FxRatesService } from '../fx/fx-rates.service';
 import { APP_REPOSITORIES } from '../../constants/repositories';
 import type { User } from '../user/entities/user.entity';
+import { UserRole } from '../user/entities/user.entity';
 
 describe('WalletService', () => {
   let service: WalletService;
@@ -20,6 +21,7 @@ describe('WalletService', () => {
     email: 'test@example.com',
     passwordHash: 'hash',
     emailVerified: true,
+    role: UserRole.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
   } as User;

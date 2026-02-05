@@ -45,6 +45,7 @@ describe('TransactionService', () => {
           provide: APP_REPOSITORIES.TRANSACTION,
           useValue: {
             findByUserId: jest.fn().mockResolvedValue(mockTransactions),
+            findAll: jest.fn().mockResolvedValue(mockTransactions),
           },
         },
       ],
@@ -148,6 +149,38 @@ describe('TransactionService', () => {
       expect(result[0].amount).toBe(50);
       expect(result[0].amountDestination).toBeCloseTo(81949.55, 2);
       expect(result[0].rateUsed).toBe(1638.991);
+    });
+  });
+
+  describe('getAllHistory (Admin)', () => {
+    it('returns all transactions with userId included', async () => {
+      const result = await service.getAllHistory();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        id: 'tx-2',
+        userId: 'user-1',
+        type: TransactionType.CONVERT,
+        amount: 1000,
+        currency: 'NGN',
+      });
+      expect(transactionRepo.findAll).toHaveBeenCalledWith({
+        limit: 50,
+      });
+    });
+
+    it('respects type, limit, and offset', async () => {
+      await service.getAllHistory({
+        type: TransactionType.FUND,
+        limit: 10,
+        offset: 5,
+      });
+
+      expect(transactionRepo.findAll).toHaveBeenCalledWith({
+        type: TransactionType.FUND,
+        limit: 10,
+        offset: 5,
+      });
     });
   });
 });
