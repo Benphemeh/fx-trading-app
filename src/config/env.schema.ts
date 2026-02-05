@@ -1,0 +1,26 @@
+import * as Joi from 'joi';
+
+export const configValidationSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+  PORT: Joi.number().default(3000),
+  DB_HOST: Joi.string().default('localhost'),
+  DB_PORT: Joi.number().default(5432),
+  DB_USERNAME: Joi.string().required(),
+  DB_PASSWORD: Joi.string().required(),
+  DB_DATABASE: Joi.string().required(),
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379),
+  REDIS_PASSWORD: Joi.string().allow('').optional(),
+  JWT_SECRET: Joi.string().required(),
+  JWT_EXPIRES_IN: Joi.string().default('7d'),
+  EXCHANGE_RATE_API_KEY: Joi.string().required(),
+  EXCHANGE_RATE_API_BASE_URL: Joi.string().default('https://v6.exchangerate-api.com/v6'),
+  FX_RATES_CACHE_TTL: Joi.number().default(3600),
+  MAIL_HOST: Joi.string().default('smtp.gmail.com'),
+  MAIL_PORT: Joi.number().default(587),
+  MAIL_USER: Joi.string().allow('').optional(),
+  MAIL_PASSWORD: Joi.string().allow('').optional(),
+  MAIL_FROM: Joi.string().optional(),
+  RESEND_API_KEY: Joi.string().allow('').optional(),
+  SUPPORTED_CURRENCIES: Joi.string().default('NGN,USD,EUR,GBP'),
+});
